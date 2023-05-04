@@ -5,9 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/swallowarc/simple-line-ai-bot/internal/domain"
 	"io"
 	"net/http"
+
+	"github.com/swallowarc/simple-line-ai-bot/internal/domain"
 
 	"github.com/pkg/errors"
 
@@ -16,7 +17,7 @@ import (
 
 type (
 	openAIRepository struct {
-		httpClient http.Client
+		httpClient *http.Client
 		apiKey     string
 	}
 
@@ -64,7 +65,7 @@ func (cs Choices) Messages() domain.ChatMessages {
 	return messages
 }
 
-func NewOpenAIRepository(client http.Client) usecases.OpenAIRepository {
+func NewOpenAIRepository(client *http.Client) usecases.OpenAIRepository {
 	return &openAIRepository{
 		httpClient: client,
 	}

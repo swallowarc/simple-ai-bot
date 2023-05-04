@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/line/line-bot-sdk-go/v7/linebot"
+	"github.com/swallowarc/lime/lime"
 	"go.uber.org/zap"
 
 	"github.com/swallowarc/simple-line-ai-bot/internal/domain"
@@ -16,6 +17,13 @@ type (
 		uc     *usecases.Chat
 	}
 )
+
+func NewMessageEventHandler(logger *zap.Logger, uc *usecases.Chat) lime.EventHandler {
+	return &messageEventHandler{
+		logger: logger,
+		uc:     uc,
+	}
+}
 
 func convEventMessage(event *linebot.Event) (domain.EventSource, error) {
 	var id string

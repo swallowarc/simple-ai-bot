@@ -1,4 +1,4 @@
-package infrastructures
+package redis
 
 import (
 	"context"
@@ -17,7 +17,7 @@ const (
 )
 
 type (
-	redisClient struct {
+	client struct {
 		cli redis.Cmdable
 	}
 
@@ -28,8 +28,8 @@ type (
 	}
 )
 
-func NewRedisClient(config Config) interfaces.MemDBClient {
-	return &redisClient{
+func NewClient(config Config) interfaces.MemDBClient {
+	return &client{
 		cli: redis.NewClient(&redis.Options{
 			Addr:       config.HostPort,
 			Password:   config.Password, // no password set
@@ -39,21 +39,21 @@ func NewRedisClient(config Config) interfaces.MemDBClient {
 	}
 }
 
-func (c *redisClient) Ping(ctx context.Context) error {
+func (c *client) Ping(ctx context.Context) error {
 	if err := c.cli.Ping(ctx).Err(); err != nil {
 		return errors.Wrapf(err, "failed to redis Ping")
 	}
 	return nil
 }
 
-func (c *redisClient) Expire(ctx context.Context, key string, duration time.Duration) error {
+func (c *client) Expire(ctx context.Context, key string, duration time.Duration) error {
 	if err := c.cli.Expire(ctx, key, duration).Err(); err != nil {
 		return errors.Wrap(err, "failed to redis Expire")
 	}
 	return nil
 }
 
-func (c *redisClient) Set(ctx context.Context, key string, value any, duration time.Duration) error {
+func (c *client) Set(ctx context.Context, key string, value any, duration time.Duration) error {
 	if err := c.cli.Set(ctx, key, value, duration).Err(); err != nil {
 		return errors.Wrap(err, "failed to redis Set")
 	}
@@ -63,7 +63,7 @@ func (c *redisClient) Set(ctx context.Context, key string, value any, duration t
 // SetNX sets the value of key to value if key does not exist.
 //
 //	It returns true if the key was set.
-func (c *redisClient) SetNX(ctx context.Context, key string, value any, duration time.Duration) (bool, error) {
+func (c *client) SetNX(ctx context.Context, key string, value any, duration time.Duration) (bool, error) {
 	result, err := c.cli.SetNX(ctx, key, value, duration).Result()
 	if err != nil {
 		return false, errors.Wrap(err, "failed to redis SetNX")
@@ -71,7 +71,7 @@ func (c *redisClient) SetNX(ctx context.Context, key string, value any, duration
 	return result, nil
 }
 
-func (c *redisClient) Get(ctx context.Context, key string) (string, error) {
+func (c *client) Get(ctx context.Context, key string) (string, error) {
 	val, err := c.cli.Get(ctx, key).Result()
 	if err == redis.Nil {
 		return "", domain.ErrNotFound
@@ -82,7 +82,7 @@ func (c *redisClient) Get(ctx context.Context, key string) (string, error) {
 	return val, nil
 }
 
-func (c *redisClient) Del(ctx context.Context, key string) error {
+func (c *client) Del(ctx context.Context, key string) error {
 	err := c.cli.Del(ctx, key).Err()
 	if err == redis.Nil {
 		return domain.ErrNotFound
