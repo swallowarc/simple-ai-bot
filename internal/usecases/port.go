@@ -3,9 +3,14 @@ package usecases
 import (
 	"context"
 
-	"github.com/swallowarc/simple-line-ai-bot/internal/interfaces/repositories"
+	"github.com/swallowarc/simple-line-ai-bot/internal/domain"
 )
 
-type OpenAIRepository interface {
-	ChatCompletion(ctx context.Context, req *repositories.ChatCompletionRequest) (*repositories.ChatCompletionResponse, error)
-}
+type (
+	CacheRepository interface {
+		ListChatMessages(ctx context.Context, es domain.EventSource) (domain.ChatMessages, error)
+	}
+	OpenAIRepository interface {
+		ChatCompletion(ctx context.Context, messages domain.ChatMessages) (domain.ChatMessages, error)
+	}
+)

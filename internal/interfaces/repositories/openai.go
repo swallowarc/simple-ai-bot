@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/swallowarc/simple-line-ai-bot/internal/domain"
 	"io"
 	"net/http"
 
@@ -20,24 +21,19 @@ type (
 	}
 
 	ChatCompletionRequest struct {
-		Model       string    `json:"model"`
-		Messages    []Message `json:"messages"`
-		MaxTokens   int       `json:"max_tokens"`
-		Temperature float64   `json:"temperature"`
-	}
-
-	Message struct {
-		Role    string `json:"role"`
-		Content string `json:"content"`
+		Model       string              `json:"model"`
+		Messages    domain.ChatMessages `json:"messages"`
+		MaxTokens   int                 `json:"max_tokens,omitempty"`
+		Temperature float64             `json:"temperature,omitempty"`
 	}
 
 	ChatCompletionResponse struct {
-		ID      string    `json:"id"`
-		Object  string    `json:"object"`
-		Created int       `json:"created"`
-		Model   string    `json:"model"`
-		Usage   Usage     `json:"usage"`
-		Choices []Choices `json:"choices"`
+		ID      string  `json:"id"`
+		Object  string  `json:"object"`
+		Created int     `json:"created"`
+		Model   string  `json:"model"`
+		Usage   Usage   `json:"usage"`
+		Choices Choices `json:"choices"`
 	}
 
 	Usage struct {
@@ -46,15 +42,27 @@ type (
 		TotalTokens      int `json:"total_tokens"`
 	}
 
-	Choices struct {
-		Message struct {
-			Role    string `json:"role"`
-			Content string `json:"content"`
-		} `json:"message"`
-		FinishReason string `json:"finish_reason"`
-		Index        int    `json:"index"`
+	Choice struct {
+		domain.ChatMessage `json:"message"`
+		FinishReason       string `json:"finish_reason"`
+		Index              int    `json:"index"`
 	}
+	Choices []Choice
 )
+
+func (cs Choices) Messages() domain.ChatMessages {
+	l := len(cs)
+	if l == 0 {
+		return nil
+	}
+
+	var messages domain.ChatMessages
+	for _, c := range cs {
+		messages = append(messages, c.ChatMessage)
+	}
+
+	return messages
+}
 
 func NewOpenAIRepository(client http.Client) usecases.OpenAIRepository {
 	return &openAIRepository{
@@ -62,7 +70,12 @@ func NewOpenAIRepository(client http.Client) usecases.OpenAIRepository {
 	}
 }
 
-func (c *openAIRepository) ChatCompletion(ctx context.Context, req *ChatCompletionRequest) (*ChatCompletionResponse, error) {
+func (c *openAIRepository) ChatCompletion(ctx context.Context, messages domain.ChatMessages) (domain.ChatMessages, error) {
+	req := &ChatCompletionRequest{
+		Model:       "",
+		Messages:    messages,
+		Temperature: 0,
+	}
 	jsonData, err := json.Marshal(*req)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error marshalling request data")
@@ -88,11 +101,15 @@ func (c *openAIRepository) ChatCompletion(ctx context.Context, req *ChatCompleti
 		return nil, errors.Wrapf(err, "error reading response body")
 	}
 
+	if res.StatusCode != http.StatusOK {
+		return nil, errors.Errorf("error status code: %d, body: %s", res.StatusCode, body)
+	}
+
 	var completionResponse ChatCompletionResponse
 	err = json.Unmarshal(body, &completionResponse)
 	if err != nil {
 		return nil, errors.Wrapf(err, "error unmarshalling response body")
 	}
 
-	return &completionResponse, nil
+	return completionResponse.Choices.Messages(), nil
 }

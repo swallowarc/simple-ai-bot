@@ -2,7 +2,7 @@ package infrastructures
 
 import (
 	"context"
-	"fmt"
+	"github.com/swallowarc/simple-line-ai-bot/internal/core"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -73,7 +73,7 @@ func (c *redisClient) SetNX(ctx context.Context, key string, value any, duration
 func (c *redisClient) Get(ctx context.Context, key string) (string, error) {
 	val, err := c.cli.Get(ctx, key).Result()
 	if err == redis.Nil {
-		return "", errors.Errorf(fmt.Sprintf("%s does not exist", key))
+		return "", core.ErrNotFound
 	}
 	if err != nil {
 		return "", errors.Wrap(err, "failed to redis Get")
@@ -84,7 +84,7 @@ func (c *redisClient) Get(ctx context.Context, key string) (string, error) {
 func (c *redisClient) Del(ctx context.Context, key string) error {
 	err := c.cli.Del(ctx, key).Err()
 	if err == redis.Nil {
-		return errors.Errorf(fmt.Sprintf("%s does not exist", key))
+		return core.ErrNotFound
 	}
 	if err != nil {
 		return errors.Wrap(err, "failed to redis Del")

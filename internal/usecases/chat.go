@@ -4,31 +4,48 @@ import (
 	"context"
 
 	"github.com/swallowarc/simple-line-ai-bot/internal/domain"
-	"github.com/swallowarc/simple-line-ai-bot/internal/interfaces"
 )
 
 type (
 	Chat struct {
-		memDBRepo  interfaces.MemDBClient
+		cacheRepo  CacheRepository
 		openAIRepo OpenAIRepository
 	}
 )
 
-const (
-	chatHistoryLimit = 10
-)
-
 func NewChat(
-	memDBRepo interfaces.MemDBClient,
+	memDBRepo CacheRepository,
 	openAIRepo OpenAIRepository,
 ) *Chat {
 	return &Chat{
-		memDBRepo:  memDBRepo,
+		cacheRepo:  memDBRepo,
 		openAIRepo: openAIRepo,
 	}
 }
 
-func (c *Chat) Chat(ctx context.Context, es domain.EventSource, req string) (string, error) {
-	c.memDBRepo.Get(ctx, es.Key())
-	return nil
+func (uc *Chat) Chat(ctx context.Context, es domain.EventSource, req string) (string, error) {
+	messages, err := uc.cacheRepo.ListChatMessages(ctx, es)
+	if err != nil {
+		return "", err
+	}
+
+	messages = append(messages, domain.ChatMessage{
+		Role:    domain.RoleUser,
+		Content: req,
+	})
+
+	newMessages, err := uc.openAIRepo.ChatCompletion(ctx, messages)
+	if err != nil {
+		return "", err
+	}
+
+	messages = append(messages, newMessages...)
+
+	// TODO: 最新の10件をmemDに保存
+
+	if lm := newMessages.LatestMessage(); lm != nil {
+		return lm.Content, nil
+	}
+
+	return "", nil
 }
