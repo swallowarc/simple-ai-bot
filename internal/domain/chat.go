@@ -4,6 +4,7 @@ type Role string
 
 const (
 	ChatHistoryLimit = 10
+	ChatHistoryLife  = 60 * 60 * 24 // 1day
 )
 
 const (

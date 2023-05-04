@@ -28,22 +28,25 @@ func (uc *Chat) Chat(ctx context.Context, es domain.EventSource, req string) (st
 	if err != nil {
 		return "", err
 	}
-
 	messages = append(messages, domain.ChatMessage{
 		Role:    domain.RoleUser,
 		Content: req,
 	})
 
-	newMessages, err := uc.openAIRepo.ChatCompletion(ctx, messages)
+	aiResponse, err := uc.openAIRepo.ChatCompletion(ctx, messages)
 	if err != nil {
 		return "", err
 	}
+	messages = append(messages, aiResponse...)
+	if l := len(messages); l > domain.ChatHistoryLimit {
+		messages = messages[l-domain.ChatHistoryLimit:]
+	}
 
-	messages = append(messages, newMessages...)
+	if err := uc.cacheRepo.SetChatMessages(ctx, es, messages); err != nil {
+		return "", err
+	}
 
-	// TODO: 最新の10件をmemDに保存
-
-	if lm := newMessages.LatestMessage(); lm != nil {
+	if lm := aiResponse.LatestMessage(); lm != nil {
 		return lm.Content, nil
 	}
 

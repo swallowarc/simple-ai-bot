@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	"github.com/pkg/errors"
-	"github.com/swallowarc/simple-line-ai-bot/internal/core"
+
 	"github.com/swallowarc/simple-line-ai-bot/internal/domain"
 	"github.com/swallowarc/simple-line-ai-bot/internal/usecases"
 
@@ -28,10 +29,14 @@ func NewCacheRepository(memDBCli interfaces.MemDBClient) usecases.CacheRepositor
 	}
 }
 
+func (c *cacheRepository) chatMessagesKey(es domain.EventSource) string {
+	return fmt.Sprintf(keyChatMessages, es.Type, es.ID)
+}
+
 func (c *cacheRepository) ListChatMessages(ctx context.Context, es domain.EventSource) (domain.ChatMessages, error) {
-	j, err := c.memDBCli.Get(ctx, fmt.Sprintf(keyChatMessages, es.Type, es.ID))
+	j, err := c.memDBCli.Get(ctx, c.chatMessagesKey(es))
 	if err != nil {
-		if !errors.Is(err, core.ErrNotFound) {
+		if !errors.Is(err, domain.ErrNotFound) {
 			return domain.ChatMessages{}, err
 		}
 		return nil, err
@@ -43,4 +48,17 @@ func (c *cacheRepository) ListChatMessages(ctx context.Context, es domain.EventS
 	}
 
 	return domain.ChatMessages{}, nil
+}
+
+func (c *cacheRepository) SetChatMessages(ctx context.Context, es domain.EventSource, cms domain.ChatMessages) error {
+	j, err := json.Marshal(cms)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal json")
+	}
+
+	if err := c.memDBCli.Set(ctx, c.chatMessagesKey(es), string(j), domain.ChatHistoryLife); err != nil {
+		return err
+	}
+
+	return nil
 }
