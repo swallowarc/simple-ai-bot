@@ -65,17 +65,18 @@ func (cs Choices) Messages() domain.ChatMessages {
 	return messages
 }
 
-func NewOpenAIRepository(client *http.Client) usecases.OpenAIRepository {
+func NewOpenAIRepository(client *http.Client, apiKey string) usecases.OpenAIRepository {
 	return &openAIRepository{
 		httpClient: client,
+		apiKey:     apiKey,
 	}
 }
 
-func (c *openAIRepository) ChatCompletion(ctx context.Context, messages domain.ChatMessages) (domain.ChatMessages, error) {
+func (r *openAIRepository) ChatCompletion(ctx context.Context, messages domain.ChatMessages) (domain.ChatMessages, error) {
 	req := &ChatCompletionRequest{
-		Model:       "",
-		Messages:    messages,
-		Temperature: 0,
+		Model:    "gpt-3.5-turbo",
+		Messages: messages,
+		//Temperature: 0,
 	}
 	jsonData, err := json.Marshal(*req)
 	if err != nil {
@@ -88,10 +89,9 @@ func (c *openAIRepository) ChatCompletion(ctx context.Context, messages domain.C
 	}
 
 	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.apiKey))
+	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", r.apiKey))
 
-	client := &http.Client{}
-	res, err := client.Do(request.WithContext(ctx))
+	res, err := r.httpClient.Do(request.WithContext(ctx))
 	if err != nil {
 		return nil, errors.Wrapf(err, "error making request")
 	}

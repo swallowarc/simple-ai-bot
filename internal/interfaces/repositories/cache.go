@@ -36,8 +36,8 @@ func (c *cacheRepository) chatMessagesKey(es domain.EventSource) string {
 func (c *cacheRepository) ListChatMessages(ctx context.Context, es domain.EventSource) (domain.ChatMessages, error) {
 	j, err := c.memDBCli.Get(ctx, c.chatMessagesKey(es))
 	if err != nil {
-		if !errors.Is(err, domain.ErrNotFound) {
-			return domain.ChatMessages{}, err
+		if errors.Is(err, domain.ErrNotFound) {
+			return domain.ChatMessages{}, nil
 		}
 		return nil, err
 	}

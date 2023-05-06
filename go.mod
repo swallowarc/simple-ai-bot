@@ -4,10 +4,11 @@ go 1.20
 
 require (
 	github.com/go-redis/redis/v8 v8.11.5
+	github.com/golang/mock v1.6.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/line/line-bot-sdk-go/v7 v7.20.0
 	github.com/pkg/errors v0.9.1
-	github.com/swallowarc/lime v0.0.0-20230504155132-856d4920268d
+	github.com/swallowarc/lime v0.0.0-20230506154045-7ef5b2b3a19a
 	go.uber.org/fx v1.19.2
 	go.uber.org/zap v1.24.0
 )

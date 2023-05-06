@@ -64,7 +64,9 @@ func interfaceModules() fx.Option {
 		fx.Provide(
 			interfaces.NewMessageEventHandler,
 			repositories.NewCacheRepository,
-			repositories.NewOpenAIRepository,
+			func(cli *http.Client, e env.BotEnv) usecases.OpenAIRepository {
+				return repositories.NewOpenAIRepository(cli, e.OpenAIAPIKey)
+			},
 		),
 	)
 }

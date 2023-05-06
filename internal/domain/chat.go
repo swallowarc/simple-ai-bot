@@ -1,10 +1,12 @@
 package domain
 
+import "time"
+
 type Role string
 
 const (
 	ChatHistoryLimit = 10
-	ChatHistoryLife  = 60 * 60 * 24 // 1day
+	ChatHistoryLife  = 60 * 60 * 24 * time.Second // 1day
 )
 
 const (

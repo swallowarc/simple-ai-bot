@@ -24,5 +24,7 @@ go.work
 *.iml
 
 # Datastore
-
 docker/data/*
+
+# Environment
+/.envrc

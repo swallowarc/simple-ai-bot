@@ -56,20 +56,18 @@ func (h *messageEventHandler) Handle(ctx context.Context, event *linebot.Event, 
 func (h *messageEventHandler) handleLogic(ctx context.Context, event *linebot.Event, cli *linebot.Client) error {
 	switch message := event.Message.(type) {
 	case *linebot.TextMessage:
-		if _, err := cli.ReplyMessage(event.ReplyToken, linebot.NewTextMessage(message.Text)).Do(); err != nil {
-			es, err := convEventMessage(event)
-			if err != nil {
-				return err
-			}
+		es, err := convEventMessage(event)
+		if err != nil {
+			return err
+		}
 
-			aiResponse, err := h.uc.Chat(ctx, es, message.Text)
-			if err != nil {
-				return err
-			}
+		aiResponse, err := h.uc.Chat(ctx, es, message.Text)
+		if err != nil {
+			return err
+		}
 
-			if _, err := cli.ReplyMessage(event.ReplyToken, linebot.NewTextMessage(aiResponse)).Do(); err != nil {
-				return err
-			}
+		if _, err := cli.ReplyMessage(event.ReplyToken, linebot.NewTextMessage(aiResponse)).Do(); err != nil {
+			return err
 		}
 	}
 
