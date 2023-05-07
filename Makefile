@@ -4,7 +4,6 @@ VERSION  := v0.0.0
 REVISION := $(shell git rev-parse --short HEAD)
 
 # Go parameters
-BINARY_NAME=porker-rpc
 SRCS    := $(shell find . -type f -name '*.go')
 DIST_DIRS := find * -type d -exec
 LDFLAGS := -ldflags="-s -w -X \"main.Version=$(VERSION)\" -X \"main.Revision=$(REVISION)\" -extldflags \"-static\""

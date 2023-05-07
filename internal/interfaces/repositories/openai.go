@@ -74,9 +74,10 @@ func NewOpenAIRepository(client *http.Client, apiKey string) usecases.OpenAIRepo
 
 func (r *openAIRepository) ChatCompletion(ctx context.Context, messages domain.ChatMessages) (domain.ChatMessages, error) {
 	req := &ChatCompletionRequest{
-		Model:    "gpt-3.5-turbo",
-		Messages: messages,
-		//Temperature: 0,
+		Model:       "gpt-3.5-turbo",
+		Messages:    messages,
+		MaxTokens:   200,
+		Temperature: 0.8,
 	}
 	jsonData, err := json.Marshal(*req)
 	if err != nil {

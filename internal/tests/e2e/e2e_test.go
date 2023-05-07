@@ -16,7 +16,7 @@ const channelSecret = "xxxxx"
 const localWebhookURL = "http://localhost:8080/callback"
 
 func TestChat(t *testing.T) {
-	//t.Skip("Skip e2e test(because it's not mocked linebot client)")
+	t.Skip("Skip e2e test(a mock server for LINE needs to be implemented)")
 
 	webhookRequest := `{
 		"events": [

@@ -44,7 +44,7 @@ func convEventMessage(event *linebot.Event) (domain.EventSource, error) {
 	}, nil
 }
 
-func (h *messageEventHandler) Handle(ctx context.Context, event *linebot.Event, cli *linebot.Client) error {
+func (h *messageEventHandler) Handle(ctx context.Context, event *linebot.Event, cli lime.LineBotClient) error {
 	if err := h.handleLogic(ctx, event, cli); err != nil {
 		h.logger.Error("failed to handle logic", zap.Error(err))
 		return err
@@ -53,7 +53,7 @@ func (h *messageEventHandler) Handle(ctx context.Context, event *linebot.Event, 
 	return nil
 }
 
-func (h *messageEventHandler) handleLogic(ctx context.Context, event *linebot.Event, cli *linebot.Client) error {
+func (h *messageEventHandler) handleLogic(ctx context.Context, event *linebot.Event, cli lime.LineBotClient) error {
 	switch message := event.Message.(type) {
 	case *linebot.TextMessage:
 		es, err := convEventMessage(event)
