@@ -16,7 +16,7 @@ import (
 
 func main() {
 	app := fx.New(
-		fx.WithLogger(func(log *zap.Logger, env env.BotEnv) fxevent.Logger {
+		fx.WithLogger(func(log *zap.Logger, env env.Env) fxevent.Logger {
 			if env.Env == "DEBUG" {
 				return &fxevent.ZapLogger{Logger: log}
 			}
@@ -35,7 +35,7 @@ func main() {
 	app.Run()
 }
 
-func initialize(lc fx.Lifecycle, logger *zap.Logger, cli interfaces.MemDBClient, conf redis.Config) {
+func initialize(lc fx.Lifecycle, logger *zap.Logger, cli interfaces.MemDBClient, conf redis.Env) {
 	lc.Append(fx.Hook{
 		OnStart: func(context.Context) error {
 			logger.Info("start")

@@ -11,6 +11,7 @@ type (
 	CacheRepository interface {
 		ListChatMessages(ctx context.Context, es domain.EventSource) (domain.ChatMessages, error)
 		SetChatMessages(ctx context.Context, es domain.EventSource, cms domain.ChatMessages) error
+		DeleteChatMessages(ctx context.Context, es domain.EventSource) error
 	}
 	OpenAIRepository interface {
 		ChatCompletion(ctx context.Context, messages domain.ChatMessages) (domain.ChatMessages, error)

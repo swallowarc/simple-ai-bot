@@ -52,3 +52,7 @@ func (uc *Chat) Chat(ctx context.Context, es domain.EventSource, req string) (st
 
 	return "", nil
 }
+
+func (uc *Chat) ClearChatHistory(ctx context.Context, es domain.EventSource) error {
+	return uc.cacheRepo.SetChatMessages(ctx, es, domain.ChatMessages{})
+}

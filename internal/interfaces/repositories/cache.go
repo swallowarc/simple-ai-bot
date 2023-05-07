@@ -47,7 +47,7 @@ func (c *cacheRepository) ListChatMessages(ctx context.Context, es domain.EventS
 		return nil, errors.Wrap(err, "failed to unmarshal json")
 	}
 
-	return domain.ChatMessages{}, nil
+	return cms, nil
 }
 
 func (c *cacheRepository) SetChatMessages(ctx context.Context, es domain.EventSource, cms domain.ChatMessages) error {
@@ -57,6 +57,14 @@ func (c *cacheRepository) SetChatMessages(ctx context.Context, es domain.EventSo
 	}
 
 	if err := c.memDBCli.Set(ctx, c.chatMessagesKey(es), string(j), domain.ChatHistoryLife); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (c *cacheRepository) DeleteChatMessages(ctx context.Context, es domain.EventSource) error {
+	if err := c.memDBCli.Del(ctx, c.chatMessagesKey(es)); err != nil {
 		return err
 	}
 

@@ -37,8 +37,8 @@ func interfaceModules() fx.Option {
 	return fx.Options(
 		fx.Provide(
 			repositories.NewCacheRepository,
-			func(cli *http.Client, e env.BotEnv) usecases.OpenAIRepository {
-				return repositories.NewOpenAIRepository(cli, e.OpenAIAPIKey)
+			func(cli *http.Client, e env.Env) usecases.OpenAIRepository {
+				return repositories.NewOpenAIRepository(cli, e.OpenAIAPIKey, e.OpenAIAPIMaxTokens, e.OpenAIAPITemperature)
 			},
 		),
 	)

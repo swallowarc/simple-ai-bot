@@ -11,6 +11,7 @@ require (
 	github.com/swallowarc/lime v0.0.0-20230507135806-3948cfa5814c
 	go.uber.org/fx v1.19.2
 	go.uber.org/zap v1.24.0
+	golang.org/x/text v0.3.6
 )
 
 require (

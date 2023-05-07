@@ -21,19 +21,19 @@ type (
 		cli redis.Cmdable
 	}
 
-	Config struct {
+	Env struct {
 		HostPort string `envconfig:"host_port" default:"localhost:6379"`
 		Password string `envconfig:"password" default:""`
 		DB       int    `envconfig:"db" default:"0"`
 	}
 )
 
-func NewClient(config Config) interfaces.MemDBClient {
+func NewClient(env Env) interfaces.MemDBClient {
 	return &client{
 		cli: redis.NewClient(&redis.Options{
-			Addr:       config.HostPort,
-			Password:   config.Password, // no password set
-			DB:         config.DB,       // use default DB
+			Addr:       env.HostPort,
+			Password:   env.Password, // no password set
+			DB:         env.DB,       // use default DB
 			MaxRetries: maxRetries,
 		}),
 	}

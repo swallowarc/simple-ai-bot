@@ -8,32 +8,34 @@ import (
 )
 
 type (
-	BotEnv struct {
-		Env          string `envconfig:"env" default:"DEBUG"`
-		OpenAIAPIKey string `envconfig:"open_ai_api_key" required:"true"`
+	Env struct {
+		Env                  string  `envconfig:"env" default:"DEBUG"`
+		OpenAIAPIKey         string  `envconfig:"open_ai_api_key" required:"true"`
+		OpenAIAPIMaxTokens   int     `envconfig:"open_ai_api_max_tokens" default:"400"`
+		OpenAIAPITemperature float64 `envconfig:"open_ai_api_temperature" default:"0.6"`
 	}
 )
 
 var (
-	Bot   BotEnv
-	Redis redis.Config
-	Lime  lime.Env
+	botEnv   Env
+	redisEnv redis.Env
+	limeEnv  lime.Env
 )
 
 func init() {
-	envconfig.MustProcess("", &Bot)
-	envconfig.MustProcess("redis", &Redis)
-	envconfig.MustProcess("lime", &Lime)
+	envconfig.MustProcess("", &botEnv)
+	envconfig.MustProcess("redis", &redisEnv)
+	envconfig.MustProcess("lime", &limeEnv)
 }
 
-func GetBotEnv() BotEnv {
-	return Bot
+func GetBotEnv() Env {
+	return botEnv
 }
 
-func GetRedisEnv() redis.Config {
-	return Redis
+func GetRedisEnv() redis.Env {
+	return redisEnv
 }
 
 func GetLimeEnv() lime.Env {
-	return Lime
+	return limeEnv
 }

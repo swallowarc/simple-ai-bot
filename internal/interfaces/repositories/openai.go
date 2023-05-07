@@ -17,8 +17,10 @@ import (
 
 type (
 	openAIRepository struct {
-		httpClient *http.Client
-		apiKey     string
+		httpClient  *http.Client
+		apiKey      string
+		maxTokens   int
+		temperature float64
 	}
 
 	ChatCompletionRequest struct {
@@ -65,10 +67,12 @@ func (cs Choices) Messages() domain.ChatMessages {
 	return messages
 }
 
-func NewOpenAIRepository(client *http.Client, apiKey string) usecases.OpenAIRepository {
+func NewOpenAIRepository(client *http.Client, apiKey string, maxTokens int, temperature float64) usecases.OpenAIRepository {
 	return &openAIRepository{
-		httpClient: client,
-		apiKey:     apiKey,
+		httpClient:  client,
+		apiKey:      apiKey,
+		maxTokens:   maxTokens,
+		temperature: temperature,
 	}
 }
 
@@ -76,8 +80,8 @@ func (r *openAIRepository) ChatCompletion(ctx context.Context, messages domain.C
 	req := &ChatCompletionRequest{
 		Model:       "gpt-3.5-turbo",
 		Messages:    messages,
-		MaxTokens:   200,
-		Temperature: 0.8,
+		MaxTokens:   r.maxTokens,
+		Temperature: r.temperature,
 	}
 	jsonData, err := json.Marshal(*req)
 	if err != nil {
