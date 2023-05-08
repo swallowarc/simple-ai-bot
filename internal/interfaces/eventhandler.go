@@ -4,9 +4,10 @@ import (
 	"context"
 
 	"github.com/line/line-bot-sdk-go/v7/linebot"
-	"github.com/swallowarc/lime/lime"
 	"go.uber.org/zap"
 	"golang.org/x/text/width"
+
+	"github.com/swallowarc/lime/lime"
 
 	"github.com/swallowarc/simple-line-ai-bot/internal/domain"
 	"github.com/swallowarc/simple-line-ai-bot/internal/usecases"
@@ -15,22 +16,11 @@ import (
 type (
 	messageEventHandler struct {
 		logger *zap.Logger
-		uc     *usecases.Chat
+		uc     usecases.Chat
 	}
 )
 
-const (
-	commandPrefix = "?"
-	commandClear  = commandPrefix + "c"
-
-	helpText = `AIの使い方
-* ?: このヘルプを表示
-* ?c: AI会話履歴をクリア
-* ?(質問文): AIに質問
-`
-)
-
-func NewMessageEventHandler(logger *zap.Logger, uc *usecases.Chat) lime.EventHandler {
+func NewMessageEventHandler(logger *zap.Logger, uc usecases.Chat) lime.EventHandler {
 	return &messageEventHandler{
 		logger: logger,
 		uc:     uc,
@@ -61,40 +51,65 @@ func (h *messageEventHandler) Handle(ctx context.Context, event *linebot.Event, 
 	case *linebot.TextMessage:
 		es, err := convEventMessage(event)
 		if err != nil {
+			h.replyError(cli, event.ReplyToken)
 			return err
 		}
 
-		prefix := width.Narrow.String(message.Text[:len(commandPrefix)])
-		if prefix != commandPrefix {
+		cmd, ok := h.extractCmd(message.Text)
+		if !ok {
 			return nil
 		}
 
-		switch {
-		case message.Text == commandPrefix:
-			if _, err := cli.ReplyMessage(event.ReplyToken, linebot.NewTextMessage(helpText)).Do(); err != nil {
-				return err
+		callback := func(ctx context.Context, replyMessage string) error {
+			if _, err := cli.ReplyMessage(event.ReplyToken, linebot.NewTextMessage(replyMessage)).Do(); err != nil {
+				h.replyError(cli, event.ReplyToken)
 			}
+			return nil
+		}
 
-		case message.Text == commandClear:
-			if err := h.uc.ClearChatHistory(ctx, es); err != nil {
-				return err
-			}
-
-			if _, err := cli.ReplyMessage(event.ReplyToken, linebot.NewTextMessage("AI会話履歴をクリアしました")).Do(); err != nil {
-				return err
-			}
-
+		switch cmd {
+		case commandPrefix:
+			err = h.uc.Help(ctx, callback)
+		case commandClear:
+			err = h.uc.ClearChatHistory(ctx, es, callback)
 		default:
-			aiResponse, err := h.uc.Chat(ctx, es, message.Text[len(commandPrefix):])
-			if err != nil {
-				return err
-			}
-
-			if _, err := cli.ReplyMessage(event.ReplyToken, linebot.NewTextMessage(aiResponse)).Do(); err != nil {
-				return err
-			}
+			err = h.uc.Chat(ctx, es, cmd, callback)
+		}
+		if err != nil {
+			return err
 		}
 	}
 
 	return nil
+}
+
+func (h *messageEventHandler) replyError(cli lime.LineBotClient, replyToken string) {
+	if _, err := cli.ReplyMessage(replyToken, linebot.NewTextMessage(domain.MessageError)).Do(); err != nil {
+		h.logger.Error("failed to reply message", zap.Error(err))
+	}
+}
+
+func (h *messageEventHandler) extractCmd(msg string) (string, bool) {
+	narrow := width.Narrow.String(msg)
+	nl := len([]rune(narrow))
+	pl := len([]rune(commandPrefix))
+
+	if nl < pl || narrow[:pl] != commandPrefix {
+		return "", false
+	}
+
+	if narrow == commandPrefix {
+		return narrow, true
+	}
+
+	if nl == pl+1 {
+		switch narrow {
+		case commandClear:
+			return narrow, true
+		}
+	}
+
+	nr := []rune(narrow)
+	cmd := string(nr[pl:])
+	return cmd, true
 }

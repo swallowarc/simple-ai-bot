@@ -18,15 +18,22 @@ func TestChat(t *testing.T) {
 		infrastructureModules(),
 		interfaceModules(),
 		usecaseModules(),
-		fx.Invoke(func(uc *usecases.Chat) {
-			got, err := uc.Chat(context.Background(), domain.EventSource{
-				Type: linebot.EventSourceTypeUser,
-				ID:   "id",
-			}, "ドラえもんの誕生日は？")
+		fx.Invoke(func(uc usecases.Chat) {
+			err := uc.Chat(
+				context.Background(),
+				domain.EventSource{
+					Type: linebot.EventSourceTypeUser,
+					ID:   "id",
+				},
+				"ドラえもんの誕生日は？",
+				func(ctx context.Context, replyMessage string) error {
+					t.Logf("got: %v", replyMessage)
+					return nil
+				},
+			)
 			if err != nil {
 				t.Fatalf("failed to chat: %v", err)
 			}
-			t.Logf("got: %v", got)
 		}),
 	)
 	testApp.RequireStart().RequireStop()

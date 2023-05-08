@@ -1,0 +1,3 @@
+export OPEN_AI_API_KEY=your_api_key
+export LIME_CHANNEL_SECRET=your_channel_secret
+export DOCKER_REGISTRY=your_docker_registry

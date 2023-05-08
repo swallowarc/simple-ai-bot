@@ -25,7 +25,7 @@ GRPC_PORT ?= 50051
 DOCKER_CMD = docker
 DOCKER_COMPOSE_CMD = docker-compose
 DOCKER_BUILD = $(DOCKER_CMD) build
-DOCKER_REGISTRY = swallowarc/simple-line-ai-bot
+DOCKER_REGISTRY ?= fake-repository
 DOCKER_USER ?= fake_user
 DOCKER_PASS ?= fake_pass
 

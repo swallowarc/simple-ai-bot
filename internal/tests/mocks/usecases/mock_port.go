@@ -35,6 +35,20 @@ func (m *MockCacheRepository) EXPECT() *MockCacheRepositoryMockRecorder {
 	return m.recorder
 }
 
+// DeleteChatMessages mocks base method.
+func (m *MockCacheRepository) DeleteChatMessages(ctx context.Context, es domain.EventSource) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteChatMessages", ctx, es)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteChatMessages indicates an expected call of DeleteChatMessages.
+func (mr *MockCacheRepositoryMockRecorder) DeleteChatMessages(ctx, es interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteChatMessages", reflect.TypeOf((*MockCacheRepository)(nil).DeleteChatMessages), ctx, es)
+}
+
 // ListChatMessages mocks base method.
 func (m *MockCacheRepository) ListChatMessages(ctx context.Context, es domain.EventSource) (domain.ChatMessages, error) {
 	m.ctrl.T.Helper()
