@@ -8,7 +8,7 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/line/line-bot-sdk-go/v7 v7.20.0
 	github.com/pkg/errors v0.9.1
-	github.com/swallowarc/lime v0.0.0-20230507135806-3948cfa5814c
+	github.com/swallowarc/lime v0.0.0-20230508150444-c56275603b14
 	go.uber.org/fx v1.19.2
 	go.uber.org/zap v1.24.0
 	golang.org/x/text v0.9.0

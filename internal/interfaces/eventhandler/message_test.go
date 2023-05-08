@@ -1,4 +1,4 @@
-package interfaces
+package eventhandler
 
 import (
 	"testing"

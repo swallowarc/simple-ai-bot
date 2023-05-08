@@ -3,7 +3,6 @@ package main
 import (
 	"net/http"
 
-	"github.com/line/line-bot-sdk-go/v7/linebot"
 	"github.com/swallowarc/lime/lime"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -11,7 +10,7 @@ import (
 	"github.com/swallowarc/simple-line-ai-bot/internal/core"
 	"github.com/swallowarc/simple-line-ai-bot/internal/infrastructures/env"
 	"github.com/swallowarc/simple-line-ai-bot/internal/infrastructures/redis"
-	"github.com/swallowarc/simple-line-ai-bot/internal/interfaces"
+	"github.com/swallowarc/simple-line-ai-bot/internal/interfaces/eventhandler"
 	"github.com/swallowarc/simple-line-ai-bot/internal/interfaces/repositories"
 	"github.com/swallowarc/simple-line-ai-bot/internal/usecases"
 )
@@ -38,7 +37,7 @@ func infrastructureModules() fx.Option {
 			},
 			fx.Annotate(
 				func(h lime.EventHandler) lime.APIServerOption {
-					return lime.WithEventHandler(linebot.EventTypeMessage, h)
+					return lime.WithEventHandler(h)
 				},
 				fx.ResultTags(`group:"lime_options"`),
 			),
@@ -62,7 +61,7 @@ func infrastructureModules() fx.Option {
 func interfaceModules() fx.Option {
 	return fx.Module("interfaces",
 		fx.Provide(
-			interfaces.NewMessageEventHandler,
+			eventhandler.NewMessageEventHandler,
 			repositories.NewCacheRepository,
 			func(cli *http.Client, e env.Env) usecases.OpenAIRepository {
 				return repositories.NewOpenAIRepository(cli, e.OpenAIAPIKey, e.OpenAIAPIMaxTokens, e.OpenAIAPITemperature)

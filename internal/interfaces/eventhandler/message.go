@@ -1,4 +1,4 @@
-package interfaces
+package eventhandler
 
 import (
 	"context"
@@ -27,29 +27,14 @@ func NewMessageEventHandler(logger *zap.Logger, uc usecases.Chat) lime.EventHand
 	}
 }
 
-func convEventMessage(event *linebot.Event) (domain.EventSource, error) {
-	var id string
-	switch event.Source.Type {
-	case linebot.EventSourceTypeUser:
-		id = event.Source.UserID
-	case linebot.EventSourceTypeGroup:
-		id = event.Source.GroupID
-	case linebot.EventSourceTypeRoom:
-		id = event.Source.RoomID
-	default:
-		return domain.EventSource{}, domain.ErrUnknownEventSource
-	}
-
-	return domain.EventSource{
-		Type: event.Source.Type,
-		ID:   id,
-	}, nil
+func (h *messageEventHandler) EventType() linebot.EventType {
+	return linebot.EventTypeMessage
 }
 
 func (h *messageEventHandler) Handle(ctx context.Context, event *linebot.Event, cli lime.LineBotClient) error {
 	switch message := event.Message.(type) {
 	case *linebot.TextMessage:
-		es, err := convEventMessage(event)
+		es, err := convertEventSource(event)
 		if err != nil {
 			h.replyError(cli, event.ReplyToken)
 			return err
