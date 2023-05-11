@@ -10,7 +10,6 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	domain "github.com/swallowarc/simple-line-ai-bot/internal/domain"
-	usecases "github.com/swallowarc/simple-line-ai-bot/internal/usecases"
 )
 
 // MockChat is a mock of Chat interface.
@@ -37,43 +36,43 @@ func (m *MockChat) EXPECT() *MockChatMockRecorder {
 }
 
 // Chat mocks base method.
-func (m *MockChat) Chat(ctx context.Context, es domain.EventSource, req string, callback usecases.Callback) error {
+func (m *MockChat) Chat(ctx context.Context, es domain.EventSource, replyToken, req string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Chat", ctx, es, req, callback)
+	ret := m.ctrl.Call(m, "Chat", ctx, es, replyToken, req)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Chat indicates an expected call of Chat.
-func (mr *MockChatMockRecorder) Chat(ctx, es, req, callback interface{}) *gomock.Call {
+func (mr *MockChatMockRecorder) Chat(ctx, es, replyToken, req interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Chat", reflect.TypeOf((*MockChat)(nil).Chat), ctx, es, req, callback)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Chat", reflect.TypeOf((*MockChat)(nil).Chat), ctx, es, replyToken, req)
 }
 
 // ClearChatHistory mocks base method.
-func (m *MockChat) ClearChatHistory(ctx context.Context, es domain.EventSource, callback usecases.Callback) error {
+func (m *MockChat) ClearChatHistory(ctx context.Context, es domain.EventSource, replyToken string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ClearChatHistory", ctx, es, callback)
+	ret := m.ctrl.Call(m, "ClearChatHistory", ctx, es, replyToken)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ClearChatHistory indicates an expected call of ClearChatHistory.
-func (mr *MockChatMockRecorder) ClearChatHistory(ctx, es, callback interface{}) *gomock.Call {
+func (mr *MockChatMockRecorder) ClearChatHistory(ctx, es, replyToken interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClearChatHistory", reflect.TypeOf((*MockChat)(nil).ClearChatHistory), ctx, es, callback)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClearChatHistory", reflect.TypeOf((*MockChat)(nil).ClearChatHistory), ctx, es, replyToken)
 }
 
 // Help mocks base method.
-func (m *MockChat) Help(ctx context.Context, callback usecases.Callback) error {
+func (m *MockChat) Help(ctx context.Context, replyToken string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Help", ctx, callback)
+	ret := m.ctrl.Call(m, "Help", ctx, replyToken)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Help indicates an expected call of Help.
-func (mr *MockChatMockRecorder) Help(ctx, callback interface{}) *gomock.Call {
+func (mr *MockChatMockRecorder) Help(ctx, replyToken interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Help", reflect.TypeOf((*MockChat)(nil).Help), ctx, callback)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Help", reflect.TypeOf((*MockChat)(nil).Help), ctx, replyToken)
 }

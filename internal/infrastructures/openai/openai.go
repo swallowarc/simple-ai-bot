@@ -1,4 +1,4 @@
-package repositories
+package openai
 
 import (
 	"bytes"
@@ -8,21 +8,13 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/swallowarc/simple-line-ai-bot/internal/domain"
-
 	"github.com/pkg/errors"
 
-	"github.com/swallowarc/simple-line-ai-bot/internal/usecases"
+	"github.com/swallowarc/simple-line-ai-bot/internal/domain"
+	"github.com/swallowarc/simple-line-ai-bot/internal/interfaces"
 )
 
 type (
-	openAIRepository struct {
-		httpClient  *http.Client
-		apiKey      string
-		maxTokens   int
-		temperature float64
-	}
-
 	ChatCompletionRequest struct {
 		Model       string              `json:"model"`
 		Messages    domain.ChatMessages `json:"messages"`
@@ -67,21 +59,31 @@ func (cs Choices) Messages() domain.ChatMessages {
 	return messages
 }
 
-func NewOpenAIRepository(client *http.Client, apiKey string, maxTokens int, temperature float64) usecases.OpenAIRepository {
-	return &openAIRepository{
-		httpClient:  client,
-		apiKey:      apiKey,
-		maxTokens:   maxTokens,
-		temperature: temperature,
+type (
+	openAIClient struct {
+		httpClient  *http.Client
+		apiKey      string
+		maxTokens   int
+		temperature float64
 	}
-}
 
-func (r *openAIRepository) ChatCompletion(ctx context.Context, messages domain.ChatMessages) (domain.ChatMessages, error) {
+	Env struct {
+		APIKey         string  `envconfig:"api_key" required:"true"`
+		APIMaxTokens   int     `envconfig:"api_max_tokens" default:"400"`
+		APITemperature float64 `envconfig:"api_temperature" default:"0.6"`
+	}
+)
+
+func (c *openAIClient) ChatCompletion(ctx context.Context, messages domain.ChatMessages) (domain.ChatMessages, error) {
+	if len(messages) == 0 {
+		return nil, errors.New("chat messages is empty")
+	}
+
 	req := &ChatCompletionRequest{
 		Model:       "gpt-3.5-turbo",
 		Messages:    messages,
-		MaxTokens:   r.maxTokens,
-		Temperature: r.temperature,
+		MaxTokens:   c.maxTokens,
+		Temperature: c.temperature,
 	}
 	jsonData, err := json.Marshal(*req)
 	if err != nil {
@@ -94,9 +96,9 @@ func (r *openAIRepository) ChatCompletion(ctx context.Context, messages domain.C
 	}
 
 	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", r.apiKey))
+	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.apiKey))
 
-	res, err := r.httpClient.Do(request.WithContext(ctx))
+	res, err := c.httpClient.Do(request.WithContext(ctx))
 	if err != nil {
 		return nil, errors.Wrapf(err, "error making request")
 	}
@@ -118,4 +120,13 @@ func (r *openAIRepository) ChatCompletion(ctx context.Context, messages domain.C
 	}
 
 	return completionResponse.Choices.Messages(), nil
+}
+
+func NewClient(httpClient *http.Client, env Env) interfaces.AIClient {
+	return &openAIClient{
+		httpClient:  httpClient,
+		apiKey:      env.APIKey,
+		maxTokens:   env.APIMaxTokens,
+		temperature: env.APITemperature,
+	}
 }

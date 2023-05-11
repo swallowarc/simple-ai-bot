@@ -4,11 +4,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/swallowarc/simple-line-ai-bot/internal/domain"
-
-	"github.com/go-redis/redis/v8"
 	"github.com/pkg/errors"
 
+	"github.com/go-redis/redis/v8"
+
+	"github.com/swallowarc/simple-line-ai-bot/internal/domain"
 	"github.com/swallowarc/simple-line-ai-bot/internal/interfaces"
 )
 
@@ -32,8 +32,8 @@ func NewClient(env Env) interfaces.MemDBClient {
 	return &client{
 		cli: redis.NewClient(&redis.Options{
 			Addr:       env.HostPort,
-			Password:   env.Password, // no password set
-			DB:         env.DB,       // use default DB
+			Password:   env.Password,
+			DB:         env.DB,
 			MaxRetries: maxRetries,
 		}),
 	}
@@ -67,6 +67,17 @@ func (c *client) SetNX(ctx context.Context, key string, value any, duration time
 	result, err := c.cli.SetNX(ctx, key, value, duration).Result()
 	if err != nil {
 		return false, errors.Wrap(err, "failed to redis SetNX")
+	}
+	return result, nil
+}
+
+// SetXX sets the value of key to value if key already exists.
+//
+//	It returns true if the key was set.
+func (c *client) SetXX(ctx context.Context, key string, value any, duration time.Duration) (bool, error) {
+	result, err := c.cli.SetXX(ctx, key, value, duration).Result()
+	if err != nil {
+		return false, errors.Wrap(err, "failed to redis SetXX")
 	}
 	return result, nil
 }

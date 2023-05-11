@@ -2,13 +2,16 @@ package eventhandler
 
 import (
 	"github.com/line/line-bot-sdk-go/v7/linebot"
+	"github.com/pkg/errors"
 
 	"github.com/swallowarc/simple-line-ai-bot/internal/domain"
 )
 
 const (
-	commandPrefix = "?"
-	commandClear  = commandPrefix + "c"
+	commandPrefix  = "?"
+	commandClear   = commandPrefix + "c"
+	commandApprove = commandPrefix + "a "
+	commandReject  = commandPrefix + "r "
 )
 
 func convertEventSource(event *linebot.Event) (domain.EventSource, error) {
@@ -21,7 +24,8 @@ func convertEventSource(event *linebot.Event) (domain.EventSource, error) {
 	case linebot.EventSourceTypeRoom:
 		id = event.Source.RoomID
 	default:
-		return domain.EventSource{}, domain.ErrUnknownEventSource
+		return domain.EventSource{},
+			errors.Wrapf(domain.ErrInvalidArgument, "event_source_type: %s", event.Source.Type)
 	}
 
 	return domain.EventSource{

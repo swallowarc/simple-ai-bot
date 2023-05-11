@@ -16,14 +16,24 @@ import (
 type (
 	messageEventHandler struct {
 		logger *zap.Logger
-		uc     usecases.Chat
+
+		lineRepo usecases.MessagingRepository
+		chat     usecases.Chat
+		license  usecases.License
 	}
 )
 
-func NewMessageEventHandler(logger *zap.Logger, uc usecases.Chat) lime.EventHandler {
+func NewMessageEventHandler(
+	logger *zap.Logger,
+	lineRepo usecases.MessagingRepository,
+	chat usecases.Chat,
+	license usecases.License,
+) lime.EventHandler {
 	return &messageEventHandler{
-		logger: logger,
-		uc:     uc,
+		logger:   logger,
+		lineRepo: lineRepo,
+		chat:     chat,
+		license:  license,
 	}
 }
 
@@ -31,13 +41,32 @@ func (h *messageEventHandler) EventType() linebot.EventType {
 	return linebot.EventTypeMessage
 }
 
-func (h *messageEventHandler) Handle(ctx context.Context, event *linebot.Event, cli lime.LineBotClient) error {
+func (h *messageEventHandler) Handle(ctx context.Context, event *linebot.Event) error {
+	if err := h.handle(ctx, event); err != nil {
+		h.replyError(event.ReplyToken)
+		return err
+	}
+
+	return nil
+}
+
+func (h *messageEventHandler) handle(ctx context.Context, event *linebot.Event) error {
 	switch message := event.Message.(type) {
 	case *linebot.TextMessage:
 		es, err := convertEventSource(event)
 		if err != nil {
-			h.replyError(cli, event.ReplyToken)
 			return err
+		}
+
+		// Check license
+		ls, err := h.license.IssueIfNoLicense(ctx, es, event.ReplyToken)
+		if err != nil {
+			return err
+		}
+		if !ls.IsApproved() {
+			h.logger.Info("license is not approved",
+				zap.String("unique_key", es.UniqueID()), zap.String("state", ls.String()))
+			return nil
 		}
 
 		cmd, ok := h.extractCmd(message.Text)
@@ -45,20 +74,14 @@ func (h *messageEventHandler) Handle(ctx context.Context, event *linebot.Event, 
 			return nil
 		}
 
-		callback := func(ctx context.Context, replyMessage string) error {
-			if _, err := cli.ReplyMessage(event.ReplyToken, linebot.NewTextMessage(replyMessage)).Do(); err != nil {
-				h.replyError(cli, event.ReplyToken)
-			}
-			return nil
-		}
-
 		switch cmd {
 		case commandPrefix:
-			err = h.uc.Help(ctx, callback)
+			err = h.chat.Help(ctx, event.ReplyToken)
 		case commandClear:
-			err = h.uc.ClearChatHistory(ctx, es, callback)
+			err = h.chat.ClearChatHistory(ctx, es, event.ReplyToken)
+		// TODO: approveとrejectの処理を実装
 		default:
-			err = h.uc.Chat(ctx, es, cmd, callback)
+			err = h.chat.Chat(ctx, es, event.ReplyToken, cmd)
 		}
 		if err != nil {
 			return err
@@ -68,8 +91,8 @@ func (h *messageEventHandler) Handle(ctx context.Context, event *linebot.Event, 
 	return nil
 }
 
-func (h *messageEventHandler) replyError(cli lime.LineBotClient, replyToken string) {
-	if _, err := cli.ReplyMessage(replyToken, linebot.NewTextMessage(domain.MessageError)).Do(); err != nil {
+func (h *messageEventHandler) replyError(replyToken string) {
+	if err := h.lineRepo.ReplyMessage(context.Background(), replyToken, domain.MessageError); err != nil {
 		h.logger.Error("failed to reply message", zap.Error(err))
 	}
 }

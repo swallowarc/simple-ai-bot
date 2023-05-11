@@ -5,7 +5,6 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/line/line-bot-sdk-go/v7/linebot"
-	mock_lime "github.com/swallowarc/lime/linebotmock"
 	"go.uber.org/zap"
 
 	"github.com/swallowarc/simple-line-ai-bot/internal/domain"
@@ -16,9 +15,8 @@ func TestMessageEventHandler_Handle(t *testing.T) {
 	l := zap.NewExample()
 
 	testcases := map[string]struct {
-		event       *linebot.Event
-		cliModifier func(cli *mock_lime.MockLineBotClient)
-		ucModifier  func(chat *mock_usecases.MockChat)
+		event      *linebot.Event
+		ucModifier func(chat *mock_usecases.MockChat)
 
 		wantErrMsg string
 	}{
@@ -41,15 +39,13 @@ func TestMessageEventHandler_Handle(t *testing.T) {
 				},
 				ReplyToken: "test-reply-token",
 			},
-			cliModifier: func(cli *mock_lime.MockLineBotClient) {},
 			ucModifier: func(chat *mock_usecases.MockChat) {
 				chat.EXPECT().Chat(gomock.Any(), domain.EventSource{
 					Type: linebot.EventSourceTypeUser,
 					ID:   "test-user-id",
 				},
-					"test-message",
-					gomock.Any(),
-				).Return(nil)
+					"test-reply-token",
+					"test-message").Return(nil)
 			},
 		},
 	}
@@ -62,11 +58,6 @@ func TestMessageEventHandler_Handle(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			cli := mock_lime.NewMockLineBotClient(ctrl)
-			if tc.cliModifier != nil {
-				tc.cliModifier(cli)
-			}
-
 			chat := mock_usecases.NewMockChat(ctrl)
 			if tc.ucModifier != nil {
 				tc.ucModifier(chat)
@@ -74,10 +65,10 @@ func TestMessageEventHandler_Handle(t *testing.T) {
 
 			h := &messageEventHandler{
 				logger: l,
-				uc:     chat,
+				chat:   chat,
 			}
 
-			err := h.Handle(nil, tc.event, cli)
+			err := h.Handle(nil, tc.event)
 			if err != nil {
 				if tc.wantErrMsg == "" {
 					t.Errorf("unexpected error: %v", err)

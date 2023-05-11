@@ -25,11 +25,8 @@ func TestChat(t *testing.T) {
 					Type: linebot.EventSourceTypeUser,
 					ID:   "id",
 				},
+				"replyToken",
 				"ドラえもんの誕生日は？",
-				func(ctx context.Context, replyMessage string) error {
-					t.Logf("got: %v", replyMessage)
-					return nil
-				},
 			)
 			if err != nil {
 				t.Fatalf("failed to chat: %v", err)

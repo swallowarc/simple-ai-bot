@@ -10,6 +10,7 @@ import (
 	time "time"
 
 	gomock "github.com/golang/mock/gomock"
+	domain "github.com/swallowarc/simple-line-ai-bot/internal/domain"
 )
 
 // MockMemDBClient is a mock of MemDBClient interface.
@@ -119,4 +120,57 @@ func (m *MockMemDBClient) SetNX(ctx context.Context, key string, value any, dura
 func (mr *MockMemDBClientMockRecorder) SetNX(ctx, key, value, duration interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetNX", reflect.TypeOf((*MockMemDBClient)(nil).SetNX), ctx, key, value, duration)
+}
+
+// SetXX mocks base method.
+func (m *MockMemDBClient) SetXX(ctx context.Context, key string, value any, duration time.Duration) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetXX", ctx, key, value, duration)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SetXX indicates an expected call of SetXX.
+func (mr *MockMemDBClientMockRecorder) SetXX(ctx, key, value, duration interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetXX", reflect.TypeOf((*MockMemDBClient)(nil).SetXX), ctx, key, value, duration)
+}
+
+// MockAIClient is a mock of AIClient interface.
+type MockAIClient struct {
+	ctrl     *gomock.Controller
+	recorder *MockAIClientMockRecorder
+}
+
+// MockAIClientMockRecorder is the mock recorder for MockAIClient.
+type MockAIClientMockRecorder struct {
+	mock *MockAIClient
+}
+
+// NewMockAIClient creates a new mock instance.
+func NewMockAIClient(ctrl *gomock.Controller) *MockAIClient {
+	mock := &MockAIClient{ctrl: ctrl}
+	mock.recorder = &MockAIClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockAIClient) EXPECT() *MockAIClientMockRecorder {
+	return m.recorder
+}
+
+// ChatCompletion mocks base method.
+func (m *MockAIClient) ChatCompletion(ctx context.Context, messages domain.ChatMessages) (domain.ChatMessages, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ChatCompletion", ctx, messages)
+	ret0, _ := ret[0].(domain.ChatMessages)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ChatCompletion indicates an expected call of ChatCompletion.
+func (mr *MockAIClientMockRecorder) ChatCompletion(ctx, messages interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ChatCompletion", reflect.TypeOf((*MockAIClient)(nil).ChatCompletion), ctx, messages)
 }

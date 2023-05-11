@@ -9,6 +9,8 @@ import (
 
 	"github.com/swallowarc/simple-line-ai-bot/internal/core"
 	"github.com/swallowarc/simple-line-ai-bot/internal/infrastructures/env"
+	"github.com/swallowarc/simple-line-ai-bot/internal/infrastructures/line"
+	"github.com/swallowarc/simple-line-ai-bot/internal/infrastructures/openai"
 	"github.com/swallowarc/simple-line-ai-bot/internal/infrastructures/redis"
 	"github.com/swallowarc/simple-line-ai-bot/internal/interfaces/eventhandler"
 	"github.com/swallowarc/simple-line-ai-bot/internal/interfaces/repositories"
@@ -31,10 +33,15 @@ func infrastructureModules() fx.Option {
 			env.GetBotEnv,
 			env.GetRedisEnv,
 			env.GetLimeEnv,
+			env.GetLineEnv,
+			env.GetOpenAI,
 			redis.NewClient,
 			func() *http.Client {
+				// TODO: replace to retryable client.
 				return http.DefaultClient
 			},
+			line.NewClient,
+			openai.NewClient,
 			fx.Annotate(
 				func(h lime.EventHandler) lime.APIServerOption {
 					return lime.WithEventHandler(h)
@@ -51,7 +58,7 @@ func infrastructureModules() fx.Option {
 				fx.In
 				LimeEnv     lime.Env
 				LimeOptions []lime.APIServerOption `group:"lime_options"`
-			}) (lime.APIServer, error) {
+			}) lime.APIServer {
 				return lime.NewServer(p.LimeEnv, p.LimeOptions...)
 			},
 		),
@@ -62,10 +69,9 @@ func interfaceModules() fx.Option {
 	return fx.Module("interfaces",
 		fx.Provide(
 			eventhandler.NewMessageEventHandler,
-			repositories.NewCacheRepository,
-			func(cli *http.Client, e env.Env) usecases.OpenAIRepository {
-				return repositories.NewOpenAIRepository(cli, e.OpenAIAPIKey, e.OpenAIAPIMaxTokens, e.OpenAIAPITemperature)
-			},
+			repositories.NewChatRepository,
+			repositories.NewMessagingRepository,
+			repositories.NewLicenseRepository,
 		),
 	)
 }
@@ -74,6 +80,7 @@ func usecaseModules() fx.Option {
 	return fx.Module("usecases",
 		fx.Provide(
 			usecases.NewChat,
+			usecases.NewLicense,
 		),
 	)
 }

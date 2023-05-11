@@ -3,17 +3,33 @@ package usecases
 
 import (
 	"context"
+	"time"
 
 	"github.com/swallowarc/simple-line-ai-bot/internal/domain"
 )
 
 type (
-	CacheRepository interface {
-		ListChatMessages(ctx context.Context, es domain.EventSource) (domain.ChatMessages, error)
-		SetChatMessages(ctx context.Context, es domain.EventSource, cms domain.ChatMessages) error
-		DeleteChatMessages(ctx context.Context, es domain.EventSource) error
+	ChatRepository interface {
+		ListCacheMessages(ctx context.Context, es domain.EventSource) (domain.ChatMessages, error)
+		UpsertCacheMessages(ctx context.Context, es domain.EventSource, cms domain.ChatMessages) error
+		DeleteCacheMessages(ctx context.Context, es domain.EventSource) error
+
+		Chat(ctx context.Context, messages domain.ChatMessages) (domain.ChatMessages, error)
 	}
-	OpenAIRepository interface {
-		ChatCompletion(ctx context.Context, messages domain.ChatMessages) (domain.ChatMessages, error)
+
+	MessagingRepository interface {
+		PushMessage(ctx context.Context, eventSourceID string, message string) error
+		ReplyMessage(ctx context.Context, replyToken string, message string) error
+
+		GetGroupName(_ context.Context, groupID string) (string, error)
+		ListRoomMemberNames(_ context.Context, roomID string) ([]string, error)
+		GetUserName(_ context.Context, userID string) (string, error)
+	}
+
+	LicenseRepository interface {
+		Get(ctx context.Context, es domain.EventSource) (domain.License, error)
+		Upsert(ctx context.Context, lc domain.License, lt time.Duration) error
+		Update(ctx context.Context, lc domain.License, lt time.Duration) error
+		Delete(ctx context.Context, es domain.EventSource) error
 	}
 )

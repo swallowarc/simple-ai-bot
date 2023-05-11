@@ -9,48 +9,50 @@ import (
 
 type (
 	Chat interface {
-		Help(ctx context.Context, callback Callback) error
-		ClearChatHistory(ctx context.Context, es domain.EventSource, callback Callback) error
-		Chat(ctx context.Context, es domain.EventSource, req string, callback Callback) error
+		Help(ctx context.Context, replyToken string) error
+		ClearChatHistory(ctx context.Context, es domain.EventSource, replyToken string) error
+		Chat(ctx context.Context, es domain.EventSource, replyToken, req string) error
 	}
 
 	chat struct {
-		cacheRepo  CacheRepository
-		openAIRepo OpenAIRepository
+		chatRepo ChatRepository
+		msgRepo  MessagingRepository
 	}
-
-	Callback func(ctx context.Context, replyMessage string) error
 )
 
 func NewChat(
-	memDBRepo CacheRepository,
-	openAIRepo OpenAIRepository,
+	chatRepo ChatRepository,
+	msgRepo MessagingRepository,
 ) Chat {
 	return &chat{
-		cacheRepo:  memDBRepo,
-		openAIRepo: openAIRepo,
+		chatRepo: chatRepo,
+		msgRepo:  msgRepo,
 	}
 }
 
-func (uc *chat) Help(ctx context.Context, callback Callback) error {
-	return callback(ctx, domain.MessageHelp())
-}
-
-func (uc *chat) ClearChatHistory(ctx context.Context, es domain.EventSource, callback Callback) error {
-	if err := uc.cacheRepo.DeleteChatMessages(ctx, es); err != nil {
-		return err
-	}
-
-	if err := callback(ctx, domain.MessageClearHistory); err != nil {
+func (u *chat) Help(ctx context.Context, replyToken string) error {
+	if err := u.msgRepo.ReplyMessage(ctx, replyToken, domain.MessageHelp()); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (uc *chat) Chat(ctx context.Context, es domain.EventSource, req string, callback Callback) error {
+func (u *chat) ClearChatHistory(ctx context.Context, es domain.EventSource, replyToken string) error {
+	if err := u.chatRepo.DeleteCacheMessages(ctx, es); err != nil {
+		return err
+	}
+
+	if err := u.msgRepo.ReplyMessage(ctx, replyToken, domain.MessageClearHistory); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (u *chat) Chat(ctx context.Context, es domain.EventSource, replyToken, req string) error {
 	// get chat history
-	messages, err := uc.cacheRepo.ListChatMessages(ctx, es)
+	messages, err := u.chatRepo.ListCacheMessages(ctx, es)
 	if err != nil {
 		return err
 	}
@@ -60,7 +62,7 @@ func (uc *chat) Chat(ctx context.Context, es domain.EventSource, req string, cal
 	})
 
 	// request to openAI
-	res, err := uc.openAIRepo.ChatCompletion(ctx, messages)
+	res, err := u.chatRepo.Chat(ctx, messages)
 	if err != nil {
 		return err
 	}
@@ -69,13 +71,15 @@ func (uc *chat) Chat(ctx context.Context, es domain.EventSource, req string, cal
 		messages = messages[l-domain.ChatHistoryLimit:]
 	}
 
-	if err := uc.cacheRepo.SetChatMessages(ctx, es, messages); err != nil {
+	if err := u.chatRepo.UpsertCacheMessages(ctx, es, messages); err != nil {
 		return err
 	}
 
-	lm := res.LatestMessage()
-	if lm != nil {
-		return callback(ctx, lm.Content)
+	// reply latest message
+	if lm := res.LatestMessage(); lm != nil {
+		if err := u.msgRepo.ReplyMessage(ctx, replyToken, lm.Content); err != nil {
+			return err
+		}
 	}
 
 	return nil

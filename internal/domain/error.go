@@ -1,8 +1,9 @@
 package domain
 
-import "github.com/pkg/errors"
+import "errors"
 
 var (
-	ErrNotFound           = errors.New("not found")
-	ErrUnknownEventSource = errors.New("unknown event source")
+	ErrNotFound         = errors.New("not found")
+	ErrInvalidArgument  = errors.New("invalid argument")
+	ErrPermissionDenied = errors.New("permission denied")
 )

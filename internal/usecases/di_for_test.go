@@ -36,8 +36,8 @@ func infrastructureModules() fx.Option {
 func interfaceModules() fx.Option {
 	return fx.Options(
 		fx.Provide(
-			repositories.NewCacheRepository,
-			func(cli *http.Client, e env.Env) usecases.OpenAIRepository {
+			repositories.NewChatRepository,
+			func(cli *http.Client, e env.Env) usecases.ChatRepository {
 				return repositories.NewOpenAIRepository(cli, e.OpenAIAPIKey, e.OpenAIAPIMaxTokens, e.OpenAIAPITemperature)
 			},
 		),
