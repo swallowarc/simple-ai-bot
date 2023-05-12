@@ -30,11 +30,14 @@ func coreModules() fx.Option {
 func infrastructureModules() fx.Option {
 	return fx.Module("infrastructures",
 		fx.Provide(
+			// env
 			env.GetBotEnv,
 			env.GetRedisEnv,
 			env.GetLimeEnv,
 			env.GetLineEnv,
 			env.GetOpenAI,
+
+			// clients
 			redis.NewClient,
 			func() *http.Client {
 				// TODO: replace to retryable client.
@@ -42,18 +45,46 @@ func infrastructureModules() fx.Option {
 			},
 			line.NewClient,
 			openai.NewClient,
+
+			// lime options
 			fx.Annotate(
-				func(h lime.EventHandler) lime.APIServerOption {
+				func(h *eventhandler.Follow) lime.APIServerOption {
 					return lime.WithEventHandler(h)
 				},
 				fx.ResultTags(`group:"lime_options"`),
 			),
+			fx.Annotate(
+				func(h *eventhandler.Join) lime.APIServerOption {
+					return lime.WithEventHandler(h)
+				},
+				fx.ResultTags(`group:"lime_options"`),
+			),
+			fx.Annotate(
+				func(h *eventhandler.Leave) lime.APIServerOption {
+					return lime.WithEventHandler(h)
+				},
+				fx.ResultTags(`group:"lime_options"`),
+			),
+			fx.Annotate(
+				func(h *eventhandler.Message) lime.APIServerOption {
+					return lime.WithEventHandler(h)
+				},
+				fx.ResultTags(`group:"lime_options"`),
+			),
+			fx.Annotate(
+				func(h *eventhandler.Unfollow) lime.APIServerOption {
+					return lime.WithEventHandler(h)
+				},
+				fx.ResultTags(`group:"lime_options"`),
+			),
+
 			fx.Annotate(
 				func(l *zap.Logger) lime.APIServerOption {
 					return lime.WithLogger(l)
 				},
 				fx.ResultTags(`group:"lime_options"`),
 			),
+
 			func(p struct {
 				fx.In
 				LimeEnv     lime.Env
@@ -68,7 +99,13 @@ func infrastructureModules() fx.Option {
 func interfaceModules() fx.Option {
 	return fx.Module("interfaces",
 		fx.Provide(
+			// event handlers
 			eventhandler.NewMessageEventHandler,
+			eventhandler.NewJoinEventHandler,
+			eventhandler.NewLeaveHandler,
+			eventhandler.NewFollowHandler,
+			eventhandler.NewUnfollowHandler,
+			// repositories
 			repositories.NewChatRepository,
 			repositories.NewMessagingRepository,
 			repositories.NewLicenseRepository,
@@ -80,7 +117,13 @@ func usecaseModules() fx.Option {
 	return fx.Module("usecases",
 		fx.Provide(
 			usecases.NewChat,
-			usecases.NewLicense,
+			func(
+				msgRepo usecases.MessagingRepository,
+				lineRepo usecases.LicenseRepository,
+				env env.Env,
+			) usecases.License {
+				return usecases.NewLicense(msgRepo, lineRepo, env.LicenseMode, env.AdminLineUserID)
+			},
 		),
 	)
 }

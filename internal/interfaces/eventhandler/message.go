@@ -2,19 +2,18 @@ package eventhandler
 
 import (
 	"context"
+	"strings"
 
 	"github.com/line/line-bot-sdk-go/v7/linebot"
 	"go.uber.org/zap"
 	"golang.org/x/text/width"
-
-	"github.com/swallowarc/lime/lime"
 
 	"github.com/swallowarc/simple-line-ai-bot/internal/domain"
 	"github.com/swallowarc/simple-line-ai-bot/internal/usecases"
 )
 
 type (
-	messageEventHandler struct {
+	Message struct {
 		logger *zap.Logger
 
 		lineRepo usecases.MessagingRepository
@@ -28,8 +27,8 @@ func NewMessageEventHandler(
 	lineRepo usecases.MessagingRepository,
 	chat usecases.Chat,
 	license usecases.License,
-) lime.EventHandler {
-	return &messageEventHandler{
+) *Message {
+	return &Message{
 		logger:   logger,
 		lineRepo: lineRepo,
 		chat:     chat,
@@ -37,11 +36,11 @@ func NewMessageEventHandler(
 	}
 }
 
-func (h *messageEventHandler) EventType() linebot.EventType {
+func (h *Message) EventType() linebot.EventType {
 	return linebot.EventTypeMessage
 }
 
-func (h *messageEventHandler) Handle(ctx context.Context, event *linebot.Event) error {
+func (h *Message) Handle(ctx context.Context, event *linebot.Event) error {
 	if err := h.handle(ctx, event); err != nil {
 		h.replyError(event.ReplyToken)
 		return err
@@ -50,9 +49,14 @@ func (h *messageEventHandler) Handle(ctx context.Context, event *linebot.Event) 
 	return nil
 }
 
-func (h *messageEventHandler) handle(ctx context.Context, event *linebot.Event) error {
+func (h *Message) handle(ctx context.Context, event *linebot.Event) error {
 	switch message := event.Message.(type) {
 	case *linebot.TextMessage:
+		cmd, param, ok := h.extractCmd(message.Text)
+		if !ok {
+			return nil
+		}
+
 		es, err := convertEventSource(event)
 		if err != nil {
 			return err
@@ -69,17 +73,15 @@ func (h *messageEventHandler) handle(ctx context.Context, event *linebot.Event) 
 			return nil
 		}
 
-		cmd, ok := h.extractCmd(message.Text)
-		if !ok {
-			return nil
-		}
-
 		switch cmd {
 		case commandPrefix:
 			err = h.chat.Help(ctx, event.ReplyToken)
 		case commandClear:
 			err = h.chat.ClearChatHistory(ctx, es, event.ReplyToken)
-		// TODO: approveとrejectの処理を実装
+		case commandApprove:
+			err = h.license.Approve(ctx, event.Source.UserID, param)
+		case commandReject:
+			err = h.license.Reject(ctx, event.Source.UserID, param)
 		default:
 			err = h.chat.Chat(ctx, es, event.ReplyToken, cmd)
 		}
@@ -91,33 +93,46 @@ func (h *messageEventHandler) handle(ctx context.Context, event *linebot.Event) 
 	return nil
 }
 
-func (h *messageEventHandler) replyError(replyToken string) {
+func (h *Message) replyError(replyToken string) {
 	if err := h.lineRepo.ReplyMessage(context.Background(), replyToken, domain.MessageError); err != nil {
 		h.logger.Error("failed to reply message", zap.Error(err))
 	}
 }
 
-func (h *messageEventHandler) extractCmd(msg string) (string, bool) {
-	narrow := width.Narrow.String(msg)
-	nl := len([]rune(narrow))
+func (h *Message) extractCmd(msg string) (string, string, bool) {
+	narrow := strings.Trim(width.Narrow.String(msg), " ")
 	pl := len([]rune(commandPrefix))
 
-	if nl < pl || narrow[:pl] != commandPrefix {
-		return "", false
+	if strings.HasPrefix(narrow, commandPrefix) {
+		return "", "", false
 	}
 
+	// Help
 	if narrow == commandPrefix {
-		return narrow, true
+		return commandPrefix, "", true
 	}
 
-	if nl == pl+1 {
-		switch narrow {
-		case commandClear:
-			return narrow, true
+	narrow = strings.TrimLeft(narrow, commandPrefix)
+
+	// Clear
+	if narrow == commandClear {
+		return commandClear, "", true
+	}
+
+	// Approve or Reject
+	split := strings.Split(narrow, " ")
+	switch split[0] {
+	case commandApprove, commandReject:
+		if len(split) == 2 {
+			_, err := domain.EventSourceFromUniqueID(split[1])
+			if err == nil {
+				return split[0], split[1], true
+			}
 		}
 	}
 
+	// AI Chat
 	nr := []rune(narrow)
 	cmd := string(nr[pl:])
-	return cmd, true
+	return cmd, "", true
 }

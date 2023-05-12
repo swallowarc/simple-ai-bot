@@ -9,9 +9,9 @@ import (
 
 const (
 	commandPrefix  = "?"
-	commandClear   = commandPrefix + "c"
-	commandApprove = commandPrefix + "a "
-	commandReject  = commandPrefix + "r "
+	commandClear   = "c"
+	commandApprove = "a"
+	commandReject  = "r"
 )
 
 func convertEventSource(event *linebot.Event) (domain.EventSource, error) {

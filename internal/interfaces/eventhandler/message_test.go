@@ -63,7 +63,7 @@ func TestMessageEventHandler_Handle(t *testing.T) {
 				tc.ucModifier(chat)
 			}
 
-			h := &messageEventHandler{
+			h := &Message{
 				logger: l,
 				chat:   chat,
 			}
@@ -152,7 +152,7 @@ func TestMessageEventHandler_extractCmd(t *testing.T) {
 		},
 	}
 
-	h := &messageEventHandler{}
+	h := &Message{}
 
 	for name, tc := range testcases {
 		tc := tc
