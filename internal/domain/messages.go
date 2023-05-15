@@ -12,7 +12,8 @@ const (
 話題を変える場合は会話履歴をクリアしてください。
 (最後の会話から%d時間を過ぎると自動クリアされます)`
 	messageFormatIssueLicense = `AIの利用申請を受け付けました。
-%s
+(%s) %s
+
 %s`
 	messageFormatApproved = `AIの利用申請が承認されました。
 
@@ -27,8 +28,8 @@ func MessageHelp() string {
 	return fmt.Sprintf(messageFormatHelp, ChatHistoryLimit, ChatHistoryTTLHour)
 }
 
-func MessageIssueLicense(name, eventSourceID string) string {
-	return fmt.Sprintf(messageFormatIssueLicense, name, eventSourceID)
+func MessageIssueLicense(name, eventSourceType, eventSourceID string) string {
+	return fmt.Sprintf(messageFormatIssueLicense, eventSourceType, name, eventSourceID)
 }
 
 func MessageApproved() string {

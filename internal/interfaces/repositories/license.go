@@ -27,7 +27,11 @@ func (r *licenseRepository) licenseKey(es domain.EventSource) string {
 }
 
 func (r *licenseRepository) Get(ctx context.Context, es domain.EventSource) (domain.License, error) {
-	return getFromMemDB[domain.License](ctx, r.memDBCli, r.licenseKey(es))
+	lic, err := getFromMemDB[domain.License](ctx, r.memDBCli, r.licenseKey(es))
+	if err != nil {
+		return domain.License{}, errors.Wrapf(err, "failed to get license")
+	}
+	return lic, nil
 }
 
 func (r *licenseRepository) Upsert(ctx context.Context, lc domain.License, lt time.Duration) error {
@@ -35,7 +39,7 @@ func (r *licenseRepository) Upsert(ctx context.Context, lc domain.License, lt ti
 }
 
 func (r *licenseRepository) Update(ctx context.Context, lc domain.License, lt time.Duration) error {
-	updated, err := r.memDBCli.SetXX(ctx, r.licenseKey(lc.EventSource), lc, lt)
+	updated, err := setXXToMemDB(ctx, r.memDBCli, r.licenseKey(lc.EventSource), lc, lt)
 	if err != nil {
 		return err
 	}

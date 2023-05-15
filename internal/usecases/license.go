@@ -41,9 +41,22 @@ func NewLicense(
 	}
 }
 
-func (u *license) IssueIfNoLicense(ctx context.Context, es domain.EventSource, replyToken string) (domain.LicenseState, error) {
+func (u *license) isCheckLicense(es domain.EventSource) bool {
+	// Always returned as approved if license mode is disabled
 	if !u.licenseMode {
-		// Always returned as approved if license mode is disabled
+		return false
+	}
+
+	// Always returned as approved if event source is admin user
+	if es.Type == linebot.EventSourceTypeUser && es.ID == u.adminUserID {
+		return false
+	}
+
+	return true
+}
+
+func (u *license) IssueIfNoLicense(ctx context.Context, es domain.EventSource, replyToken string) (domain.LicenseState, error) {
+	if !u.isCheckLicense(es) {
 		return domain.LicenseStateApproved, nil
 	}
 
@@ -94,7 +107,7 @@ func (u *license) issueLicense(ctx context.Context, es domain.EventSource) (doma
 		return domain.License{}, errors.Wrapf(domain.ErrInvalidArgument, "event_source_type: %s", es.Type)
 	}
 
-	if err := u.msgRepo.PushMessage(ctx, u.adminUserID, domain.MessageIssueLicense(name, es.ID)); err != nil {
+	if err := u.msgRepo.PushMessage(ctx, u.adminUserID, domain.MessageIssueLicense(name, string(es.Type), es.UniqueID())); err != nil {
 		return domain.License{}, err
 	}
 

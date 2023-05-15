@@ -62,7 +62,7 @@ func TestLicense_IssueIfNoLicense(t *testing.T) {
 			msgRepoMock: func(repo *mock_usecases.MockMessagingRepository, id string) {
 				repo.EXPECT().ReplyMessage(gomock.Any(), "replyToken", domain.MessageLicensePending).Return(nil)
 				repo.EXPECT().GetUserName(gomock.Any(), id).Return("user-name", nil)
-				repo.EXPECT().PushMessage(gomock.Any(), adminUserID, domain.MessageIssueLicense("user-name", id)).Return(nil)
+				repo.EXPECT().PushMessage(gomock.Any(), adminUserID, domain.MessageIssueLicense("user", "user-name", id)).Return(nil)
 			},
 
 			wantState: domain.LicenseStatePending,

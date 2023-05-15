@@ -26,12 +26,12 @@ func setToMemDB[T any](ctx context.Context, memDB interfaces.MemDBClient, key st
 	return memDB.Set(ctx, key, j, d)
 }
 
-func setXXToMemDB[T any](ctx context.Context, memDB interfaces.MemDBClient, key string, t T) (bool, error) {
+func setXXToMemDB[T any](ctx context.Context, memDB interfaces.MemDBClient, key string, t T, d time.Duration) (bool, error) {
 	j, err := toJson[T](t)
 	if err != nil {
 		return false, err
 	}
-	return memDB.SetXX(ctx, key, j, 0)
+	return memDB.SetXX(ctx, key, j, d)
 }
 
 func fromJson[T any](j string) (T, error) {

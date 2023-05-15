@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/pkg/errors"
+
 	"github.com/swallowarc/simple-line-ai-bot/internal/domain"
 	"github.com/swallowarc/simple-line-ai-bot/internal/usecases"
 
@@ -36,7 +38,14 @@ func (r *chatRepository) chatMessagesKey(es domain.EventSource) string {
 }
 
 func (r *chatRepository) ListCacheMessages(ctx context.Context, es domain.EventSource) (domain.ChatMessages, error) {
-	return getFromMemDB[domain.ChatMessages](ctx, r.memDBCli, r.chatMessagesKey(es))
+	ret, err := getFromMemDB[domain.ChatMessages](ctx, r.memDBCli, r.chatMessagesKey(es))
+	if err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			return domain.ChatMessages{}, nil
+		}
+	}
+
+	return ret, nil
 }
 
 func (r *chatRepository) UpsertCacheMessages(ctx context.Context, es domain.EventSource, cms domain.ChatMessages) error {
