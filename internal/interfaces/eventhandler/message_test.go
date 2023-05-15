@@ -84,8 +84,9 @@ func TestMessageEventHandler_extractCmd(t *testing.T) {
 	testcases := map[string]struct {
 		text string
 
-		wantCmd string
-		wantOk  bool
+		wantCmd   string
+		wantParam string
+		wantOk    bool
 	}{
 		"not command": {
 			text: "test-text",
@@ -93,78 +94,121 @@ func TestMessageEventHandler_extractCmd(t *testing.T) {
 		"command": {
 			text: "?test-text",
 
-			wantCmd: "test-text",
-			wantOk:  true,
+			wantCmd:   "test-text",
+			wantParam: "",
+			wantOk:    true,
 		},
 		"command help": {
 			text: "?",
 
-			wantCmd: "?",
-			wantOk:  true,
+			wantCmd:   "?",
+			wantParam: "",
+			wantOk:    true,
 		},
 		"command help full-width": {
 			text: "？",
 
-			wantCmd: "?",
-			wantOk:  true,
+			wantCmd:   "?",
+			wantParam: "",
+			wantOk:    true,
 		},
 		"command clear": {
 			text: "?c",
 
-			wantCmd: "?c",
-			wantOk:  true,
+			wantCmd:   "c",
+			wantParam: "",
+			wantOk:    true,
 		},
 		"command clear full-width1": {
 			text: "？ｃ",
 
-			wantCmd: "?c",
-			wantOk:  true,
+			wantCmd:   "c",
+			wantParam: "",
+			wantOk:    true,
 		},
 		"command clear full-width2": {
 			text: "？c",
 
-			wantCmd: "?c",
-			wantOk:  true,
+			wantCmd:   "c",
+			wantParam: "",
+			wantOk:    true,
 		},
 		"command clear full-width3": {
 			text: "?ｃ",
 
-			wantCmd: "?c",
-			wantOk:  true,
+			wantCmd:   "c",
+			wantParam: "",
+			wantOk:    true,
 		},
 		"command question": {
 			text: "?質問",
 
-			wantCmd: "質問",
-			wantOk:  true,
+			wantCmd:   "質問",
+			wantParam: "",
+			wantOk:    true,
 		},
 		"command question full-width1": {
 			text: "？質問",
 
-			wantCmd: "質問",
-			wantOk:  true,
+			wantCmd:   "質問",
+			wantParam: "",
+			wantOk:    true,
 		},
 		"command question contains command string": {
 			text: "?c質問",
 
-			wantCmd: "c質問",
-			wantOk:  true,
+			wantCmd:   "c質問",
+			wantParam: "",
+			wantOk:    true,
+		},
+		"command approve": {
+			text: "?a group:e488b45d-d049-41db-9651-512296cd39db",
+
+			wantCmd:   "a",
+			wantParam: "group:e488b45d-d049-41db-9651-512296cd39db",
+			wantOk:    true,
+		},
+		"command  approve(invalid)": {
+			text: "?a parameter",
+
+			wantCmd:   "",
+			wantParam: "",
+			wantOk:    false,
+		},
+		"command reject": {
+			text: "?r group:e488b45d-d049-41db-9651-512296cd39db",
+
+			wantCmd:   "r",
+			wantParam: "group:e488b45d-d049-41db-9651-512296cd39db",
+			wantOk:    true,
+		},
+		"command  reject(invalid)": {
+			text: "?r parameter",
+
+			wantCmd:   "",
+			wantParam: "",
+			wantOk:    false,
 		},
 	}
 
-	h := &Message{}
+	h := &Message{
+		logger: zap.NewNop(),
+	}
 
 	for name, tc := range testcases {
 		tc := tc
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 
-			cmd, ok := h.extractCmd(tc.text)
+			cmd, param, ok := h.extractCmd(tc.text)
 			if ok != tc.wantOk {
 				t.Errorf("ok: %v, want ok: %v", ok, tc.wantOk)
 			}
 			if cmd != tc.wantCmd {
 				t.Errorf("cmd: %v, want cmd: %v", cmd, tc.wantCmd)
+			}
+			if param != tc.wantParam {
+				t.Errorf("param: %v, want param: %v", param, tc.wantParam)
 			}
 		})
 	}

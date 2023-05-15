@@ -94,12 +94,13 @@ func (c *client) Get(ctx context.Context, key string) (string, error) {
 }
 
 func (c *client) Del(ctx context.Context, key string) error {
-	err := c.cli.Del(ctx, key).Err()
-	if err == redis.Nil {
-		return domain.ErrNotFound
-	}
+	result, err := c.cli.Del(ctx, key).Result()
 	if err != nil {
 		return errors.Wrap(err, "failed to redis Del")
+	}
+	if result == 0 {
+		// noop: not error if key does not exist
+		// return domain.ErrNotFound
 	}
 	return nil
 }

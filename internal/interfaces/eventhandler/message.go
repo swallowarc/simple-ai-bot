@@ -101,9 +101,7 @@ func (h *Message) replyError(replyToken string) {
 
 func (h *Message) extractCmd(msg string) (string, string, bool) {
 	narrow := strings.Trim(width.Narrow.String(msg), " ")
-	pl := len([]rune(commandPrefix))
-
-	if strings.HasPrefix(narrow, commandPrefix) {
+	if !strings.HasPrefix(narrow, commandPrefix) {
 		return "", "", false
 	}
 
@@ -128,11 +126,12 @@ func (h *Message) extractCmd(msg string) (string, string, bool) {
 			if err == nil {
 				return split[0], split[1], true
 			}
+
+			h.logger.Info("invalid unique key", zap.String("cmd", split[0]), zap.String("unique_key", split[1]))
+			return "", "", false
 		}
 	}
 
 	// AI Chat
-	nr := []rune(narrow)
-	cmd := string(nr[pl:])
-	return cmd, "", true
+	return narrow, "", true
 }

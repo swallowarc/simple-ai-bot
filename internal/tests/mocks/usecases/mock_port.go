@@ -213,6 +213,20 @@ func (m *MockLicenseRepository) EXPECT() *MockLicenseRepositoryMockRecorder {
 	return m.recorder
 }
 
+// Delete mocks base method.
+func (m *MockLicenseRepository) Delete(ctx context.Context, es domain.EventSource) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Delete", ctx, es)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Delete indicates an expected call of Delete.
+func (mr *MockLicenseRepositoryMockRecorder) Delete(ctx, es interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockLicenseRepository)(nil).Delete), ctx, es)
+}
+
 // Get mocks base method.
 func (m *MockLicenseRepository) Get(ctx context.Context, es domain.EventSource) (domain.License, error) {
 	m.ctrl.T.Helper()

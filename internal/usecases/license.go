@@ -29,13 +29,13 @@ type (
 
 func NewLicense(
 	msgRepo MessagingRepository,
-	lineRepo LicenseRepository,
+	licenseRepo LicenseRepository,
 	licenseMode bool,
 	adminUserID string,
 ) License {
 	return &license{
 		msgRepo:     msgRepo,
-		licenseRepo: lineRepo,
+		licenseRepo: licenseRepo,
 		licenseMode: licenseMode,
 		adminUserID: adminUserID,
 	}
