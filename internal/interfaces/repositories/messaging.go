@@ -21,17 +21,35 @@ func NewMessagingRepository(cli *linebot.Client) usecases.MessagingRepository {
 	}
 }
 
-func (r *messagingRepository) PushMessage(_ context.Context, eventSourceID string, message string) error {
-	if _, err := r.cli.PushMessage(eventSourceID, linebot.NewTextMessage(message)).Do(); err != nil {
-		return errors.Wrap(err, "failed to push message")
+func (r *messagingRepository) PushMessages(_ context.Context, eventSourceID string, messages ...string) error {
+	if len(messages) == 0 {
+		return errors.New("messages is empty")
+	}
+
+	var textMessages []linebot.SendingMessage
+	for _, m := range messages {
+		textMessages = append(textMessages, linebot.NewTextMessage(m))
+	}
+
+	if _, err := r.cli.PushMessage(eventSourceID, textMessages...).Do(); err != nil {
+		return errors.Wrap(err, "failed to push messages")
 	}
 
 	return nil
 }
 
-func (r *messagingRepository) ReplyMessage(_ context.Context, replyToken string, message string) error {
-	if _, err := r.cli.ReplyMessage(replyToken, linebot.NewTextMessage(message)).Do(); err != nil {
-		return errors.Wrap(err, "failed to reply message")
+func (r *messagingRepository) ReplyMessages(_ context.Context, replyToken string, messages ...string) error {
+	if len(messages) == 0 {
+		return errors.New("messages is empty")
+	}
+
+	var textMessages []linebot.SendingMessage
+	for _, m := range messages {
+		textMessages = append(textMessages, linebot.NewTextMessage(m))
+	}
+
+	if _, err := r.cli.ReplyMessage(replyToken, textMessages...).Do(); err != nil {
+		return errors.Wrap(err, "failed to reply messages")
 	}
 
 	return nil

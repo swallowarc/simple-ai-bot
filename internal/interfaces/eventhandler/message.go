@@ -79,9 +79,9 @@ func (h *Message) handle(ctx context.Context, event *linebot.Event) error {
 		case commandClear:
 			err = h.chat.ClearChatHistory(ctx, es, event.ReplyToken)
 		case commandApprove:
-			err = h.license.Approve(ctx, event.Source.UserID, param)
+			err = h.license.Approve(ctx, event.Source.UserID, param, event.ReplyToken)
 		case commandReject:
-			err = h.license.Reject(ctx, event.Source.UserID, param)
+			err = h.license.Reject(ctx, event.Source.UserID, param, event.ReplyToken)
 		default:
 			err = h.chat.Chat(ctx, es, event.ReplyToken, cmd)
 		}
@@ -94,7 +94,7 @@ func (h *Message) handle(ctx context.Context, event *linebot.Event) error {
 }
 
 func (h *Message) replyError(replyToken string) {
-	if err := h.lineRepo.ReplyMessage(context.Background(), replyToken, domain.MessageError); err != nil {
+	if err := h.lineRepo.ReplyMessages(context.Background(), replyToken, domain.MessageError); err != nil {
 		h.logger.Error("failed to reply message", zap.Error(err))
 	}
 }

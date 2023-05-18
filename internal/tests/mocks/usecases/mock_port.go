@@ -162,32 +162,42 @@ func (mr *MockMessagingRepositoryMockRecorder) ListRoomMemberNames(arg0, roomID 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRoomMemberNames", reflect.TypeOf((*MockMessagingRepository)(nil).ListRoomMemberNames), arg0, roomID)
 }
 
-// PushMessage mocks base method.
-func (m *MockMessagingRepository) PushMessage(ctx context.Context, eventSourceID, message string) error {
+// PushMessages mocks base method.
+func (m *MockMessagingRepository) PushMessages(ctx context.Context, eventSourceID string, messages ...string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PushMessage", ctx, eventSourceID, message)
+	varargs := []interface{}{ctx, eventSourceID}
+	for _, a := range messages {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "PushMessages", varargs...)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// PushMessage indicates an expected call of PushMessage.
-func (mr *MockMessagingRepositoryMockRecorder) PushMessage(ctx, eventSourceID, message interface{}) *gomock.Call {
+// PushMessages indicates an expected call of PushMessages.
+func (mr *MockMessagingRepositoryMockRecorder) PushMessages(ctx, eventSourceID interface{}, messages ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushMessage", reflect.TypeOf((*MockMessagingRepository)(nil).PushMessage), ctx, eventSourceID, message)
+	varargs := append([]interface{}{ctx, eventSourceID}, messages...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushMessages", reflect.TypeOf((*MockMessagingRepository)(nil).PushMessages), varargs...)
 }
 
-// ReplyMessage mocks base method.
-func (m *MockMessagingRepository) ReplyMessage(ctx context.Context, replyToken, message string) error {
+// ReplyMessages mocks base method.
+func (m *MockMessagingRepository) ReplyMessages(ctx context.Context, replyToken string, messages ...string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ReplyMessage", ctx, replyToken, message)
+	varargs := []interface{}{ctx, replyToken}
+	for _, a := range messages {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "ReplyMessages", varargs...)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// ReplyMessage indicates an expected call of ReplyMessage.
-func (mr *MockMessagingRepositoryMockRecorder) ReplyMessage(ctx, replyToken, message interface{}) *gomock.Call {
+// ReplyMessages indicates an expected call of ReplyMessages.
+func (mr *MockMessagingRepositoryMockRecorder) ReplyMessages(ctx, replyToken interface{}, messages ...interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReplyMessage", reflect.TypeOf((*MockMessagingRepository)(nil).ReplyMessage), ctx, replyToken, message)
+	varargs := append([]interface{}{ctx, replyToken}, messages...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReplyMessages", reflect.TypeOf((*MockMessagingRepository)(nil).ReplyMessages), varargs...)
 }
 
 // MockLicenseRepository is a mock of LicenseRepository interface.

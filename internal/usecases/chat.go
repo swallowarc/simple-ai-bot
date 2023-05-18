@@ -31,7 +31,7 @@ func NewChat(
 }
 
 func (u *chat) Help(ctx context.Context, replyToken string) error {
-	if err := u.msgRepo.ReplyMessage(ctx, replyToken, domain.MessageHelp()); err != nil {
+	if err := u.msgRepo.ReplyMessages(ctx, replyToken, domain.MessageHelp()); err != nil {
 		return err
 	}
 
@@ -43,7 +43,7 @@ func (u *chat) ClearChatHistory(ctx context.Context, es domain.EventSource, repl
 		return err
 	}
 
-	if err := u.msgRepo.ReplyMessage(ctx, replyToken, domain.MessageClearHistory); err != nil {
+	if err := u.msgRepo.ReplyMessages(ctx, replyToken, domain.MessageClearHistory); err != nil {
 		return err
 	}
 
@@ -77,7 +77,7 @@ func (u *chat) Chat(ctx context.Context, es domain.EventSource, replyToken, req 
 
 	// reply latest message
 	if lm := res.LatestMessage(); lm != nil {
-		if err := u.msgRepo.ReplyMessage(ctx, replyToken, lm.Content); err != nil {
+		if err := u.msgRepo.ReplyMessages(ctx, replyToken, lm.Content); err != nil {
 			return err
 		}
 	}

@@ -18,8 +18,8 @@ type (
 	}
 
 	MessagingRepository interface {
-		PushMessage(ctx context.Context, eventSourceID string, message string) error
-		ReplyMessage(ctx context.Context, replyToken string, message string) error
+		PushMessages(ctx context.Context, eventSourceID string, messages ...string) error
+		ReplyMessages(ctx context.Context, replyToken string, messages ...string) error
 
 		GetGroupName(_ context.Context, groupID string) (string, error)
 		ListRoomMemberNames(_ context.Context, roomID string) ([]string, error)

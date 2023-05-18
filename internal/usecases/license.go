@@ -13,8 +13,8 @@ import (
 type (
 	License interface {
 		IssueIfNoLicense(ctx context.Context, es domain.EventSource, replyToken string) (domain.LicenseState, error)
-		Approve(ctx context.Context, userID, uniqueKey string) error // Executable only by admin
-		Reject(ctx context.Context, userID, uniqueKey string) error  // Executable only by admin
+		Approve(ctx context.Context, userID, uniqueKey, replyToken string) error // Executable only by admin
+		Reject(ctx context.Context, userID, uniqueKey, replyToken string) error  // Executable only by admin
 		Drop(ctx context.Context, es domain.EventSource) error
 	}
 
@@ -70,7 +70,7 @@ func (u *license) IssueIfNoLicense(ctx context.Context, es domain.EventSource, r
 	}
 
 	if lc.State == domain.LicenseStatePending {
-		if err := u.msgRepo.ReplyMessage(ctx, replyToken, domain.MessageLicensePending); err != nil {
+		if err := u.msgRepo.ReplyMessages(ctx, replyToken, domain.MessageLicensePending); err != nil {
 			return domain.LicenseStateNone, err
 		}
 	}
@@ -107,33 +107,42 @@ func (u *license) issueLicense(ctx context.Context, es domain.EventSource) (doma
 		return domain.License{}, errors.Wrapf(domain.ErrInvalidArgument, "event_source_type: %s", es.Type)
 	}
 
-	if err := u.msgRepo.PushMessage(ctx, u.adminUserID, domain.MessageIssueLicense(name, string(es.Type), es.UniqueID())); err != nil {
+	if err := u.msgRepo.PushMessages(ctx, u.adminUserID, domain.MessageIssueLicense(name, string(es.Type)), es.UniqueID()); err != nil {
 		return domain.License{}, err
 	}
 
 	return lc, nil
 }
 
-func (u *license) Approve(ctx context.Context, userID, uniqueKey string) error {
+func (u *license) Approve(ctx context.Context, userID, uniqueKey, replyToken string) error {
 	es, err := u.updateLicenseState(ctx, userID, uniqueKey, domain.LicenseStateApproved)
 	if err != nil {
 		return err
 	}
 
-	if err := u.msgRepo.PushMessage(ctx, es.ID, domain.MessageApproved()); err != nil {
+	if err := u.msgRepo.PushMessages(ctx, es.ID, domain.MessageApproved()); err != nil {
+		return err
+	}
+
+	if err := u.msgRepo.ReplyMessages(ctx, replyToken, domain.MessageSuccessApprove(uniqueKey)); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (u *license) Reject(ctx context.Context, userID, uniqueKey string) error {
+func (u *license) Reject(ctx context.Context, userID, uniqueKey, replyToken string) error {
 	_, err := u.updateLicenseState(ctx, userID, uniqueKey, domain.LicenseStateRejected)
 	if err != nil {
 		return err
 	}
 
 	// Not send message to user if rejected.
+
+	if err := u.msgRepo.ReplyMessages(ctx, replyToken, domain.MessageSuccessReject(uniqueKey)); err != nil {
+		return err
+	}
+
 	return nil
 }
 
