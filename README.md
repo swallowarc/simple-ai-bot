@@ -1,3 +1,3 @@
-# simple-line-ai-bot
+# simple-ai-bot
 
 SSIA
